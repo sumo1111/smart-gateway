@@ -1,0 +1,33 @@
+# Binaries
+smart-gateway
+*.exe
+*.exe~
+
+# Build
+/build/
+/data/
+*.db
+*.db-journal
+*.db-wal
+
+# Dependencies
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+
+# Web
+web/node_modules/
+web/dist/
+web/build/

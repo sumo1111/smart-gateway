@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  smart-gateway:
+    build: .
+    image: sumo1111/smart-gateway:latest
+    container_name: smart-gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - sg-data:/app/data
+    environment:
+      - PORT=3000
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - DB_PATH=/app/data/smart-gateway.db
+      - AUTO_STRATEGY=${AUTO_STRATEGY:-weighted}
+      - HEALTH_INTERVAL=60
+      - FAIL_BAN_COUNT=3
+      - FAIL_BAN_DURATION=300
+      - REQUEST_TIMEOUT=120
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  sg-data:
+    driver: local
