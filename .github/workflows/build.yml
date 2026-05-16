@@ -11,31 +11,37 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             goos: linux
             goarch: amd64
+            cgo: 1
             output: smart-gateway
             archive: smart-gateway-linux-amd64.tar.gz
           - os: ubuntu-latest
             goos: linux
             goarch: arm64
+            cgo: 1
             output: smart-gateway
             archive: smart-gateway-linux-arm64.tar.gz
           - os: windows-latest
             goos: windows
             goarch: amd64
+            cgo: 1
             output: smart-gateway.exe
             archive: smart-gateway-windows-amd64.zip
           - os: macos-latest
             goos: darwin
             goarch: amd64
+            cgo: 1
             output: smart-gateway
             archive: smart-gateway-darwin-amd64.tar.gz
           - os: macos-latest
             goos: darwin
             goarch: arm64
+            cgo: 1
             output: smart-gateway
             archive: smart-gateway-darwin-arm64.tar.gz
 
@@ -57,32 +63,13 @@ jobs:
           npm install --registry=https://registry.npmmirror.com
           npm run build
 
-      - name: Build backend (Linux)
-        if: matrix.goos == 'linux'
-        run: |
-          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
-          if [ "${{ matrix.goarch }}" = "arm64" ]; then
-            CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc \
-              go build -trimpath -ldflags "-s -w -X 'main.Version=$(cat VERSION)'" -o ${{ matrix.output }} .
-          else
-            CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
-              go build -trimpath -ldflags "-s -w -X 'main.Version=$(cat VERSION)'" -o ${{ matrix.output }} .
-          fi
+      - name: Fix go.sum
+        run: go mod tidy
 
-      - name: Build backend (Windows)
-        if: matrix.goos == 'windows'
+      - name: Build backend
         env:
-          CGO_ENABLED: 1
-          GOOS: windows
-          GOARCH: amd64
-        run: |
-          go build -trimpath -ldflags "-s -w -X 'main.Version=$(cat VERSION)'" -o ${{ matrix.output }} .
-
-      - name: Build backend (macOS)
-        if: matrix.goos == 'darwin'
-        env:
-          CGO_ENABLED: 1
-          GOOS: darwin
+          CGO_ENABLED: ${{ matrix.cgo }}
+          GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
           go build -trimpath -ldflags "-s -w -X 'main.Version=$(cat VERSION)'" -o ${{ matrix.output }} .
@@ -90,20 +77,21 @@ jobs:
       - name: Package (tar.gz)
         if: matrix.goos != 'windows'
         run: |
-          mkdir -p release
+          mkdir -p release/web/build
           cp ${{ matrix.output }} release/
-          cp -r web/build release/web/build
+          cp -r web/build/* release/web/build/
           cp README.md LICENSE .env.example docker-compose.yml release/
           cd release && tar czf ../${{ matrix.archive }} .
 
-      - name: Package (zip)
+      - name: Package (zip - Windows)
         if: matrix.goos == 'windows'
+        shell: pwsh
         run: |
-          mkdir -p release
+          mkdir release/web/build
           cp ${{ matrix.output }} release/
-          cp -r web/build release/web/build
-          cp README.md LICENSE .env.example docker-compose.yml release/
-          cd release && Compress-Archive -Path * -DestinationPath ../${{ matrix.archive }}
+          cp -r web/build/* release/web/build/
+          cp README.md,LICENSE,.env.example,docker-compose.yml release/
+          Compress-Archive -Path release/* -DestinationPath ${{ matrix.archive }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -117,6 +105,12 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build frontend for Docker
+        working-directory: web
+        run: |
+          npm install --registry=https://registry.npmmirror.com
+          npm run build
 
       - uses: docker/setup-buildx-action@v3
 
@@ -144,8 +138,12 @@ jobs:
         with:
           path: ./artifacts
 
-      - name: List artifacts
-        run: find ./artifacts -type f | head -20
+      - name: Collect archives
+        run: |
+          mkdir -p ./release-files
+          find ./artifacts -name '*.tar.gz' -exec cp {} ./release-files/ \;
+          find ./artifacts -name '*.zip' -exec cp {} ./release-files/ \;
+          ls -lh ./release-files/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -165,9 +163,10 @@ jobs:
 
             ### 快速开始
             ```bash
-            # Linux
-            tar xzf smart-gateway-linux-amd64.tar.gz
+            # Linux / macOS
+            tar xzf smart-gateway-*-amd64.tar.gz
             chmod +x smart-gateway
+            export ADMIN_PASSWORD=your_password
             ./smart-gateway
 
             # Windows — 解压后双击 smart-gateway.exe
@@ -176,9 +175,8 @@ jobs:
             ### Docker
             ```bash
             docker pull sumo1111/smart-gateway:${{ github.ref_name }}
+            docker run -d -p 3000:3000 -e ADMIN_PASSWORD=your_password sumo1111/smart-gateway:${{ github.ref_name }}
             ```
-          files: |
-            ./artifacts/**/*.tar.gz
-            ./artifacts/**/*.zip
+          files: ./release-files/*
           draft: false
           prerelease: false
