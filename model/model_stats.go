@@ -102,36 +102,6 @@ func UpdateRacerScore(model string, channelID int64, score float64, avgTTFT int,
 		score, avgTTFT, avgTPS, successRate, rank, role)
 }
 
-// GetChannelsByModel 获取支持某模型的所有渠道
-func GetChannelsByModel(modelName string) ([]Channel, error) {
-	rows, err := DB.Query(`SELECT id, name, type, base_url, api_key, models, status, priority, weight, max_qps, created_at, updated_at
-		FROM channels WHERE status=1 AND models LIKE ? ORDER BY priority DESC, id`,
-		"%"+modelName+"%")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var channels []Channel
-	for rows.Next() {
-		var ch Channel
-		if err := rows.Scan(&ch.ID, &ch.Name, &ch.Type, &ch.BaseURL, &ch.APIKey, &ch.Models, &ch.Status, &ch.Priority, &ch.Weight, &ch.MaxQPS, &ch.CreatedAt, &ch.UpdatedAt); err != nil {
-			continue
-		}
-		// 精确匹配（防止"gpt-4"匹配到"gpt-4o"）
-		matched := false
-		for _, m := range ch.ModelList() {
-			if m == modelName {
-				matched = true
-				break
-			}
-		}
-		if matched {
-			channels = append(channels, ch)
-		}
-	}
-	return channels, nil
-}
-
 // GetChampionForModel 从DB获取某模型的冠军渠道
 func GetChampionForModel(modelName string) (*Channel, error) {
 	var channelID int64
