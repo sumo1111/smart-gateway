@@ -40,7 +40,13 @@ export const api = {
   setAutoStrategy: (strategy: string) => request('/api/auto/strategy', { method: 'POST', body: JSON.stringify({ strategy }) }),
   refreshAutoScores: () => request('/api/auto/refresh', { method: 'POST' }),
   probeAllChannels: () => request('/api/auto/probe', { method: 'POST' }),
+
+  // Race
+  getRaceLeaderboard: () => request<RaceLeaderboard>('/api/race/leaderboard'),
+  getRaceTrack: (model: string) => request<RaceTrack>(`/api/race/track/${encodeURIComponent(model)}`),
+  getRaceHistory: (model: string, channelId: number) => request<{ results: RaceResult[] }>(`/api/race/history/${encodeURIComponent(model)}/${channelId}`),
+  triggerRace: () => request('/api/race/trigger', { method: 'POST' }),
+  speedTestChannel: (id: number, model?: string) => request<{ result: RaceResult }>(`/api/race/speedtest/${id}${model ? '?model=' + encodeURIComponent(model) : ''}`),
 };
 
-// 需要import类型
-import type { Channel, Token, LogEntry, DashboardStats, AutoStatus } from '../types';
+import type { Channel, Token, LogEntry, DashboardStats, AutoStatus, RaceLeaderboard, RaceTrack, RaceResult } from '../types';

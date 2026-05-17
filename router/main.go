@@ -66,8 +66,18 @@ func SetupRouter(buildFS embed.FS) *gin.Engine {
 			au.POST("/probe", controller.ProbeAllChannels)
 		}
 
+		// === 竞速引擎 API ===
+		race := api.Group("/race", middleware.AdminAuth())
+		{
+			race.GET("/leaderboard", controller.GetRaceLeaderboard)
+			race.GET("/track/:model", controller.GetRaceTrack)
+			race.GET("/history/:model/:channel_id", controller.GetRaceHistory)
+			race.POST("/trigger", controller.TriggerRace)
+			race.GET("/speedtest/:id", controller.SpeedTestChannel)
+		}
+
 		api.GET("/status", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"status": "ok", "version": "1.0.0"})
+			c.JSON(http.StatusOK, gin.H{"status": "ok", "version": "1.1.0"})
 		})
 	}
 

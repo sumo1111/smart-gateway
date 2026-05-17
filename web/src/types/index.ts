@@ -49,6 +49,11 @@ export interface ModelStat {
   consecutive_fails: number;
   banned_until: string | null;
   score: number;
+  race_rank: number;
+  race_role: string;
+  avg_ttft_ms: number;
+  avg_tps: number;
+  race_success_rate: number;
 }
 
 export interface DashboardStats {
@@ -65,4 +70,48 @@ export interface AutoStatus {
   model_stats: ModelStat[];
   fail_ban_count: number;
   fail_ban_duration: number;
+}
+
+// 竞速相关类型
+export interface Racer {
+  model: string;
+  channel_id: number;
+  channel_name: string;
+  rank: number;
+  role: string; // champion / hot_standby / cold_standby / benched
+  score: number;
+  avg_ttft_ms: number;
+  avg_total_ms: number;
+  avg_tps: number;
+  success_rate: number;
+  champion_since: string | null;
+  last_test_at: string;
+  streak: number;
+  fail_streak: number;
+}
+
+export interface RaceTrack {
+  model: string;
+  champion: Racer | null;
+  hot_spare: Racer | null;
+  racers: Racer[];
+  updated_at: string;
+}
+
+export interface RaceLeaderboard {
+  strategy: string;
+  race_interval: number;
+  tracks: RaceTrack[];
+}
+
+export interface RaceResult {
+  model: string;
+  channel_id: number;
+  channel_name: string;
+  ttft_ms: number;
+  ttft_total_ms: number;
+  tps: number;
+  success: boolean;
+  error_msg: string;
+  tested_at: string;
 }

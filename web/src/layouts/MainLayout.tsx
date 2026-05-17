@@ -3,6 +3,7 @@ import { Layout, Menu, Input, Button, Typography } from 'antd';
 import {
   DashboardOutlined, ApiOutlined, KeyOutlined,
   FileTextOutlined, ThunderboltOutlined, SettingOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -14,6 +15,7 @@ const menuItems = [
   { key: '/channels', icon: <ApiOutlined />, label: '渠道管理' },
   { key: '/tokens', icon: <KeyOutlined />, label: '令牌管理' },
   { key: '/logs', icon: <FileTextOutlined />, label: '请求日志' },
+  { key: '/race', icon: <TrophyOutlined />, label: '🏁 竞速排行榜' },
   { key: '/auto', icon: <ThunderboltOutlined />, label: 'Auto 路由' },
 ];
 

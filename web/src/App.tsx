@@ -5,6 +5,7 @@ import Channels from './pages/Channels';
 import Tokens from './pages/Tokens';
 import Logs from './pages/Logs';
 import Auto from './pages/Auto';
+import RaceLeaderboardPage from './pages/RaceLeaderboard';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/tokens" element={<Tokens />} />
         <Route path="/logs" element={<Logs />} />
         <Route path="/auto" element={<Auto />} />
+        <Route path="/race" element={<RaceLeaderboardPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </MainLayout>
